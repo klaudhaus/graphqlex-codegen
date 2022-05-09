@@ -1,6 +1,6 @@
 {
   "name": "graphqlex-codegen",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "main": "lib/graphqlex-codegen.js",
   "types": "lib/graphqlex-codegen.d.ts",
   "scripts": {
@@ -13,6 +13,7 @@
   "devDependencies": {
     "@types/dedent": "^0.7.0",
     "@typescript-eslint/eslint-plugin": "^4.31.0",
+    "@typescript-eslint/parser": "4",
     "eslint": "7",
     "eslint-config-standard-with-typescript": "^20.0.0",
     "eslint-plugin-import": "2",
