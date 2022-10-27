@@ -15,7 +15,7 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
       isExternal: false
     }))
   ]
-  const visitor = new GraphqlexVisitor(schema, allFragments, config, {})
+  const visitor = new GraphqlexVisitor(schema, allFragments, { ...config, dedupeFragments: true }, {})
   const visitorResult = visit(allAst, { leave: visitor })
 
   const importsBlock = dedent`
