@@ -1,5 +1,13 @@
 import { oldVisit, PluginFunction, Types } from "@graphql-codegen/plugin-helpers"
-import { concatAST, FragmentDefinitionNode, GraphQLSchema, Kind, OperationDefinitionNode, print } from "graphql"
+import {
+  concatAST,
+  FragmentDefinitionNode,
+  GraphQLObjectType,
+  GraphQLSchema,
+  Kind,
+  OperationDefinitionNode,
+  print
+} from "graphql"
 import { ClientSideBaseVisitor, LoadedFragment } from "@graphql-codegen/visitor-plugin-common"
 import { getInputTypeInfoMap } from "./input-type-info"
 import {
@@ -10,6 +18,7 @@ import {
   setApiBlock
 } from "./output-content"
 import { getVariableInfo } from "./variable-type-info"
+import dedent from "ts-dedent"
 
 export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.DocumentFile[], config: any) => {
   const allAst = concatAST(documents.map(v => v.document))
@@ -27,7 +36,7 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
   const visitorResult = oldVisit(allAst, { leave: visitor })
 
   const inputTypeInfoMap = getInputTypeInfoMap(schema)
-  const importsBlock = getImportsBlock(visitor.typeImports)
+  const importsBlock = getImportsBlock([...new Set(visitor.typeImports)])
   const inputTypeBlock = getInputTypeBlock(inputTypeInfoMap)
   const fragmentsBlock = visitor.fragments
     .replace(/;/mg, "")
@@ -71,10 +80,25 @@ class GraphqlexVisitor extends ClientSideBaseVisitor {
 
     const selections = node.selectionSet?.selections
     let resultType: string
+    let dataTransformBlock: string
     if (selections?.length === 1 && !isSubscription) {
-      // this._schema.getTypeMap()
-      resultType = "qwerty"
-    } else {
+      const selection = selections[0] as any
+      const queryName: string = selection.name.value // Underlying query or mutation
+      if (operationType === "query") {
+        resultType = (<GraphQLObjectType> this._schema.getQueryType().getFields()[queryName].type).name
+      } else {
+        resultType = (<GraphQLObjectType> this._schema.getMutationType().getFields()[queryName].type).name
+      }
+      dataTransformBlock = dedent`
+        response.data = response.data.${queryName}
+        response.graphQLErrors?.forEach(e => e.path?.shift())
+      `
+    }
+    if (resultType === "Void") {
+      dataTransformBlock = ""
+      resultType = ""
+    }
+    if (!resultType) {
       resultType = capitalise(functionName)
     }
 
@@ -98,7 +122,8 @@ class GraphqlexVisitor extends ClientSideBaseVisitor {
       paramType,
       resultType,
       trimInputsBlock,
-      gqlBlock
+      gqlBlock,
+      dataTransformBlock
     }
 
     this.typeImports.push(operationParamType, info.resultType)

@@ -5,7 +5,7 @@ import { getVariableInfo } from "./variable-type-info"
 import { OperationTypeNode } from "graphql"
 
 export const getImportsBlock = (typeImports: string[]) => dedent`
-  import { Api, GraphQLResponse, gql, trimInput } from "graphqlex"
+  import { Api, ApiOptions, GraphQLResponse, gql, trimInput } from "graphqlex"
   import {
     ${typeImports.sort().join(",\n")}
   } from "./graphql-types"
@@ -61,7 +61,8 @@ export const queryMutationFunction = (info: OperationFunctionInfo): string => de
       ${info.gqlBlock}
     \`
     const response = await api.run(${info.operationType}, vars)
-    return <GraphQLResponse<${info.resultType}>>({ response })
+    ${info.dataTransformBlock}
+    return <GraphQLResponse<${info.resultType}>>response
   }
 
 `
