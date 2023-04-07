@@ -5,6 +5,7 @@ import { getVariableInfo } from "./variable-type-info"
 import { OperationTypeNode } from "graphql"
 
 export const getImportsBlock = (typeImports: string[]) => dedent`
+  /* eslint-disable */
   import { Api, ApiOptions, GraphQLResponse, gql, trimInput } from "graphqlex"
   import {
     ${typeImports.sort().join(",\n")}

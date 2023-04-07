@@ -2,8 +2,7 @@ import { oldVisit, PluginFunction, Types } from "@graphql-codegen/plugin-helpers
 import {
   concatAST,
   FragmentDefinitionNode,
-  GraphQLObjectType,
-  GraphQLSchema,
+  GraphQLSchema, GraphQLType,
   Kind,
   OperationDefinitionNode,
   print
@@ -19,6 +18,7 @@ import {
 } from "./output-content"
 import { getVariableInfo } from "./variable-type-info"
 import dedent from "ts-dedent"
+import { FlattenedType } from "./flattened-type"
 
 export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.DocumentFile[], config: any) => {
   const allAst = concatAST(documents.map(v => v.document))
@@ -85,9 +85,11 @@ class GraphqlexVisitor extends ClientSideBaseVisitor {
       const selection = selections[0] as any
       const queryName: string = selection.name.value // Underlying query or mutation
       if (operationType === "query") {
-        resultType = (<GraphQLObjectType> this._schema.getQueryType().getFields()[queryName].type).name
+        const type: GraphQLType = this._schema.getQueryType().getFields()[queryName].type
+        resultType = new FlattenedType(type).typeScriptName
       } else {
-        resultType = (<GraphQLObjectType> this._schema.getMutationType().getFields()[queryName].type).name
+        const type: GraphQLType = this._schema.getMutationType().getFields()[queryName].type
+        resultType = new FlattenedType(type).typeScriptName
       }
       dataTransformBlock = dedent`
         response.data = response.data.${queryName}
@@ -126,7 +128,7 @@ class GraphqlexVisitor extends ClientSideBaseVisitor {
       dataTransformBlock
     }
 
-    this.typeImports.push(operationParamType, info.resultType)
+    this.typeImports.push(operationParamType, info.resultType.replace("[]", ""))
 
     return operationFunction(info)
   }
