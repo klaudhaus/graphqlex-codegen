@@ -36,7 +36,7 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
   const visitorResult = oldVisit(allAst, { leave: visitor })
 
   const inputTypeInfoMap = getInputTypeInfoMap(schema)
-  const importsBlock = getImportsBlock([...new Set(visitor.typeImports)])
+  const importsBlock = getImportsBlock(visitor.typeImports)
   const inputTypeBlock = getInputTypeBlock(inputTypeInfoMap)
   const fragmentsBlock = visitor.fragments
     .replace(/;/mg, "")
@@ -128,7 +128,7 @@ class GraphqlexVisitor extends ClientSideBaseVisitor {
       dataTransformBlock
     }
 
-    this.typeImports.push(operationParamType, info.resultType.replace("[]", ""))
+    this.typeImports.push(operationParamType.replace("[]", ""), info.resultType.replace("[]", ""))
 
     return operationFunction(info)
   }
