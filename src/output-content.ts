@@ -25,7 +25,7 @@ export const setApiBlock = dedent`
   export function setApi (toApi: Api) { api = toApi }
   
   export function initApi (url: string, options?: ApiOptions) {
-    api = new Api(url, options)
+    return api = new Api(url, options)
   }
   
 `
