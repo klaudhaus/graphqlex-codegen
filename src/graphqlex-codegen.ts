@@ -1,6 +1,6 @@
 import { oldVisit, PluginFunction, Types } from "@graphql-codegen/plugin-helpers"
 import {
-  concatAST,
+  concatAST, DocumentNode,
   FragmentDefinitionNode,
   GraphQLSchema, GraphQLType,
   Kind,
@@ -18,7 +18,8 @@ import {
 } from "./output-content"
 import { getVariableInfo } from "./variable-type-info"
 import dedent from "ts-dedent"
-import { FlattenedType } from "./flattened-type"
+import { FlattenedType } from "./graphql/flattened-type"
+import { getNodeFragmentNames } from "./graphql/node-fragments"
 
 export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.DocumentFile[], config: any) => {
   const allAst = concatAST(documents.map(v => v.document))
@@ -33,6 +34,7 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
     }))
   ]
   const visitor = new GraphqlexVisitor(schema, allFragments, { ...config, dedupeFragments: true }, {})
+  visitor.allAst = allAst
   const visitorResult = oldVisit(allAst, { leave: visitor })
 
   const inputTypeInfoMap = getInputTypeInfoMap(schema)
@@ -56,11 +58,15 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
 class GraphqlexVisitor extends ClientSideBaseVisitor {
   typeImports: string[] = []
 
+  allAst: DocumentNode
+
   OperationDefinition (node: OperationDefinitionNode): string {
     const operationType = node.operation
     const isSubscription = operationType === "subscription"
     const operationName = node.name.value
     const functionName = operationName + capitalise(operationType)
+
+    const fragmentNames = getNodeFragmentNames(node)(this.allAst)
 
     const varDefs = node.variableDefinitions
     let paramName: string
@@ -111,7 +117,7 @@ class GraphqlexVisitor extends ClientSideBaseVisitor {
     ].filter(Boolean).join("\n")
 
     // Make GQL block
-    const fragmentDocNames = this._transformFragments(this._extractFragments(node))
+    const fragmentDocNames = this._transformFragments(fragmentNames)
     const fragmentExprs = fragmentDocNames.map(n => `\${${n}}`)
     const operationBlock = print(node)
     const gqlBlock = [...fragmentExprs, operationBlock].filter(Boolean).join("\n")
