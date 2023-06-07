@@ -60,6 +60,7 @@ export type OperationFunctionInfo = {
   paramName?: string
   paramType?: string
   resultType?: string
+  hasInputs?: boolean
   trimInputsBlock?: string
   gqlBlock?: string
   dataTransformBlock?: string
@@ -83,7 +84,7 @@ export const queryMutationFunction = (info: OperationFunctionInfo): string => de
     const ${info.operationType} = gql\`
       ${info.gqlBlock}
     \`
-    const response = await api.run(${info.operationType}, vars)
+    const response = await api.run(${info.operationType}${info.hasInputs ? ", vars" : ""})
     ${info.dataTransformBlock}
     return <GraphQLResponse<${resultTypeOrScalar(info)}>>response
   }

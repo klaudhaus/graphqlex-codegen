@@ -69,6 +69,7 @@ class GraphqlexVisitor extends ClientSideBaseVisitor {
     const fragmentNames = getNodeFragmentNames(node)(this.allAst)
 
     const varDefs = node.variableDefinitions
+    const hasInputs = !!varDefs.length
     let paramName: string
     let paramType: string
     let transformVars: string
@@ -113,7 +114,7 @@ class GraphqlexVisitor extends ClientSideBaseVisitor {
     // Make block to trim inputs
     const trimInputsBlock = [
       transformVars,
-      getTrimInputsBlock(node.variableDefinitions)
+      getTrimInputsBlock(varDefs)
     ].filter(Boolean).join("\n")
 
     // Make GQL block
@@ -129,6 +130,7 @@ class GraphqlexVisitor extends ClientSideBaseVisitor {
       paramName,
       paramType,
       resultType,
+      hasInputs,
       trimInputsBlock,
       gqlBlock,
       dataTransformBlock
