@@ -99,7 +99,7 @@ class GraphqlexVisitor extends ClientSideBaseVisitor {
         resultType = new FlattenedType(type).typeScriptName
       }
       dataTransformBlock = dedent`
-        response.data = response.data.${queryName}
+        response.data = response.data?.${queryName}
         response.graphQLErrors?.forEach(e => e.path?.shift())
       `
     }
