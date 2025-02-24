@@ -12,7 +12,7 @@ export const getImportsBlock = (typeImports: string[]) => {
   typeImports = [...typeSet]
   return dedent`
     /* eslint-disable */
-    import { Api, ApiOptions, GraphQLResponse, gql, trimInput } from "graphqlex"
+    import { Api, ApiOptions, GraphQLResponse, gql, trimInput, promoteResponseData } from "graphqlex"
     import {
       ${typeImports.sort().join(",\n")}
     } from "./graphql-types"
@@ -37,6 +37,7 @@ export const getInputTypeBlock = (inputTypeInfoMap: InputTypeInfoMap) => dedent`
 
 export const getTrimInputsBlock = (vars: readonly VariableDefinitionNode[]) => vars
   .map(v => getVariableInfo(v))
+  .filter(v => vars.length === 1 || !["String", "Boolean", "Int", "Float"].includes(v.typeName))
   .map(varInfo => {
     if (varInfo.isList) {
       return dedent`
@@ -45,7 +46,11 @@ export const getTrimInputsBlock = (vars: readonly VariableDefinitionNode[]) => v
           }
         `
     } else {
-      return `vars.${varInfo.name} = trimInput(${vars.length === 1 ? "" : "vars."}${varInfo.name}, "${varInfo.typeName}", inputTypeInfoMap)`
+      if (vars.length === 1) {
+        return `if (${varInfo.name}) vars.${varInfo.name} = trimInput(${varInfo.name}, "${varInfo.typeName}", inputTypeInfoMap)`
+      } else {
+        return `if (vars.${varInfo.name}) vars.${varInfo.name} = trimInput(vars.${varInfo.name}, "${varInfo.typeName}", inputTypeInfoMap)`
+      }
     }
   })
   .join("\n")

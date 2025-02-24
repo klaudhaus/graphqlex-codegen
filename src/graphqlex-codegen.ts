@@ -1,8 +1,10 @@
 import { oldVisit, PluginFunction, Types } from "@graphql-codegen/plugin-helpers"
 import {
-  concatAST, DocumentNode,
+  concatAST,
+  DocumentNode,
   FragmentDefinitionNode,
-  GraphQLSchema, GraphQLType,
+  GraphQLSchema,
+  GraphQLType,
   Kind,
   OperationDefinitionNode,
   print
@@ -12,12 +14,12 @@ import { getInputTypeInfoMap } from "./input-type-info"
 import {
   getImportsBlock,
   getInputTypeBlock,
+  getTrimInputsBlock,
   operationFunction,
-  getTrimInputsBlock, OperationFunctionInfo,
+  OperationFunctionInfo,
   setApiBlock
 } from "./output-content"
 import { getVariableInfo } from "./variable-type-info"
-import dedent from "ts-dedent"
 import { FlattenedType } from "./graphql/flattened-type"
 import { getNodeFragmentNames } from "./graphql/node-fragments"
 
@@ -98,10 +100,7 @@ class GraphqlexVisitor extends ClientSideBaseVisitor {
         const type: GraphQLType = this._schema.getMutationType().getFields()[queryName].type
         resultType = new FlattenedType(type).typeScriptName
       }
-      dataTransformBlock = dedent`
-        response.data = response.data?.${queryName}
-        response.graphQLErrors?.forEach(e => e.path?.shift())
-      `
+      dataTransformBlock = `promoteResponseData(response, "${queryName}")`
     }
     if (resultType === "Void") {
       dataTransformBlock = ""
