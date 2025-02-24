@@ -1,6 +1,6 @@
 {
   "name": "graphqlex-codegen",
-  "version": "0.21.0",
+  "version": "0.22.0",
   "main": "lib/graphqlex-codegen.js",
   "types": "lib/graphqlex-codegen.d.ts",
   "scripts": {
